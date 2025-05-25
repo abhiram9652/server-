@@ -29,8 +29,14 @@ app.use(cors({
 }));
 
 // Health check endpoint (critical for Railway)
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK' });
+app.get('/health', async (req, res) => {
+  try {
+    // Simple DB check
+    await mongoose.connection.db.admin().ping();
+    res.status(200).json({ status: 'OK', db: 'connected' });
+  } catch (err) {
+    res.status(500).json({ status: 'DB_ERROR', error: err.message });
+  }
 });
 
 // Routes
