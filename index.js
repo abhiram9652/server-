@@ -23,7 +23,7 @@ app.use(cors({
   origin: [
     'http://localhost:5173', 
     'http://localhost:5174',
-    'https://https://language-translation-zeta.vercel.app/login' // Add your production frontend URL
+    'https://https://language-translation-zeta.vercel.app' // Add your production frontend URL
   ],
   credentials: true
 }));
