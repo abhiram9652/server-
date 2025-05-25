@@ -20,9 +20,18 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'], // Allow both ports
+  origin: [
+    'http://localhost:5173', 
+    'http://localhost:5174',
+    'https://your-vercel-app.vercel.app' // Add your production frontend URL
+  ],
   credentials: true
 }));
+
+// Health check endpoint (critical for Railway)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK' });
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -30,20 +39,35 @@ app.use('/api/users', userRoutes);
 app.use('/api/translate', translationRoutes);
 app.use('/api/history', historyRoutes);
 
-// Connect to MongoDB
+// Improved MongoDB connection with timeout
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/telugu-translator');
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 5000, // 5 seconds timeout
+      socketTimeoutMS: 30000,        // 30 seconds socket timeout
+      family: 4                      // Force IPv4
+    });
     console.log('MongoDB connected');
   } catch (error) {
     console.error('MongoDB connection error:', error.message);
-    process.exit(1);
+    process.exit(1); // Exit process on failure
   }
 };
 
 // Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, async () => {
-  await connectDB();
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Server startup failed:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
