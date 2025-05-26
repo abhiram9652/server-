@@ -23,17 +23,21 @@ app.use(cors({
   origin: [
     'http://localhost:5173', 
     'http://localhost:5174',
-    'https://language-translation-zeta.vercel.app' // Add your production frontend URL
+    'https://language-translation-zeta.vercel.app'
   ],
   credentials: true
 }));
 
-// Health check endpoint (critical for Railway)
+// =====================
+// ROUTES
+// =====================
+
+// Basic status route
 app.get('/', (req, res) => {
   res.send('Server is working!');
 });
 
-// 2. Simplified health check (remove DB check temporarily)
+// Health check (without DB)
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK',
@@ -42,13 +46,16 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Routes
+// Application routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/translate', translationRoutes);
 app.use('/api/history', historyRoutes);
 
-// Improved MongoDB connection with timeout
+// =====================
+// DATABASE & SERVER SETUP
+// =====================
+
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI, {
@@ -57,20 +64,33 @@ const connectDB = async () => {
       family: 4
     });
     console.log('MongoDB connected');
+
+    // Add DB health check after connection is established
+    app.get('/db-health', async (req, res) => {
+      try {
+        await mongoose.connection.db.admin().ping();
+        res.json({ status: 'OK', db: 'connected' });
+      } catch (err) {
+        res.status(500).json({ status: 'DB_ERROR', error: err.message });
+      }
+    });
+
   } catch (error) {
     console.error('MongoDB connection error:', error.message);
     process.exit(1);
   }
 };
 
-// Start server
 const startServer = async () => {
   try {
     await connectDB();
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
+    
+    // Added '0.0.0.0' for Railway compatibility
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
     });
+    
   } catch (error) {
     console.error('Server startup failed:', error);
     process.exit(1);
