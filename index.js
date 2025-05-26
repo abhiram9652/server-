@@ -19,14 +19,16 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({
-  origin: [
-    'http://localhost:5173', 
-    'http://localhost:5174',
-    'https://language-translation-zeta.vercel.app' // Add your production frontend URL
-  ],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: [
+      'http://localhost:5173', // Local frontend dev
+      'http://localhost:5174',
+      'https://language-translation-seven.vercel.app', // ✅ Your deployed frontend
+    ],
+    credentials: true,
+  })
+);
 
 // Health check endpoint (critical for Railway)
 app.get('/', (req, res) => {
