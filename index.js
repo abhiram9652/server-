@@ -57,12 +57,22 @@ const connectDB = async () => {
       family: 4
     });
     console.log('MongoDB connected');
+
+    // Add DB health check after connection is established
+    app.get('/db-health', async (req, res) => {
+      try {
+        await mongoose.connection.db.admin().ping();
+        res.json({ status: 'OK', db: 'connected' });
+      } catch (err) {
+        res.status(500).json({ status: 'DB_ERROR', error: err.message });
+      }
+    });
+
   } catch (error) {
     console.error('MongoDB connection error:', error.message);
     process.exit(1);
   }
 };
-
 // Start server
 const startServer = async () => {
   try {
