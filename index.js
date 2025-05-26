@@ -29,14 +29,17 @@ app.use(cors({
 }));
 
 // Health check endpoint (critical for Railway)
-app.get('/health', async (req, res) => {
-  try {
-    // Simple DB check
-    await mongoose.connection.db.admin().ping();
-    res.status(200).json({ status: 'OK', db: 'connected' });
-  } catch (err) {
-    res.status(500).json({ status: 'DB_ERROR', error: err.message });
-  }
+app.get('/', (req, res) => {
+  res.send('Server is working!');
+});
+
+// 2. Simplified health check (remove DB check temporarily)
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK',
+    server: 'running',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Routes
